@@ -4,7 +4,7 @@
   <groupId>org.op4j</groupId>
   <artifactId>op4j-tests</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-beta4-SNAPSHOT</version>
+  <version>1.0</version>
   <name>op4j-tests</name>
   <description>op4j-tests</description>
   <url>http://www.op4j.org</url>
@@ -60,7 +60,16 @@
     </repository>
   </distributionManagement>
 
-
+  <repositories>
+    <repository>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
   <build>
     
