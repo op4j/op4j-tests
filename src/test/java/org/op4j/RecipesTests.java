@@ -867,12 +867,12 @@ public class RecipesTests extends TestCase {
         List<City> cities = new ArrayList<City>();
         City city1 = new City("Spain", "Santiago");
         cities.add(city1);
-        City city2 = new City("Spain", "Barcelona");
-        cities.add(city2);
         City city3 = new City("France", "Marseille");
         cities.add(city3);
         City city4 = new City("Portugal", "Porto");
         cities.add(city4);
+        City city2 = new City("Spain", "Barcelona");
+        cities.add(city2);
         City city5 = new City("Portugal", "Lisboa");
         cities.add(city5);
         City city6 = new City("Portugal", "Viseu");
@@ -918,15 +918,37 @@ public class RecipesTests extends TestCase {
             
         }
         
+    }
+
+    
+    
+    
+    @Test
+    public void testOP4J_XXX() throws Exception {
+
+        List<City> cities = new ArrayList<City>();
+        City city1 = new City("Spain", "Santiago");
+        cities.add(city1);
+        City city3 = new City("France", "Marseille");
+        cities.add(city3);
+        City city4 = new City("Portugal", "Porto");
+        cities.add(city4);
+        City city2 = new City("Spain", "Barcelona");
+        cities.add(city2);
+        City city5 = new City("Portugal", "Lisboa");
+        cities.add(city5);
+        City city6 = new City("Portugal", "Viseu");
+        cities.add(city6);
+        
+        Map<String,List<String>> namesResult = new LinkedHashMap<String,List<String>>();
+        namesResult.put("Spain", 
+                Arrays.asList(new String[] {city1.getName(), city2.getName()}));
+        namesResult.put("France", 
+                Arrays.asList(new String[] {city3.getName()}));
+        namesResult.put("Portugal", 
+                Arrays.asList(new String[] {city4.getName(), city5.getName(), city6.getName()}));
+        
         {
-            
-            Map<String,List<String>> namesResult = new LinkedHashMap<String,List<String>>();
-            namesResult.put("Spain", 
-                    Arrays.asList(new String[] {city1.getName(), city2.getName()}));
-            namesResult.put("France", 
-                    Arrays.asList(new String[] {city3.getName()}));
-            namesResult.put("Portugal", 
-                    Arrays.asList(new String[] {city4.getName(), city5.getName(), city6.getName()}));
             
             Map<String,List<String>> cityNamesByCountry =
                 Op.on(cities).toGroupMap(
@@ -936,10 +958,7 @@ public class RecipesTests extends TestCase {
             
         }
         
-    }
-    
-    
-    
+    }    
     
 
     
