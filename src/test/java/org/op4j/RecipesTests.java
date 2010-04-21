@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.op4j.functions.Call;
 import org.op4j.functions.DecimalPoint;
 import org.op4j.functions.Fn;
+import org.op4j.functions.FnArray;
 import org.op4j.functions.FnCalendar;
 import org.op4j.functions.FnFunc;
 import org.op4j.functions.FnList;
@@ -922,6 +923,133 @@ public class RecipesTests extends TestCase {
 
     
     
+    @Test
+    public void testOP4J_024() throws Exception {
+        // Executing an op4j function directly (without an expression)
+
+        String value = "Saint-&Eacute;tienne est une ville de France";
+        String result = "Saint-\u00C9tienne est une ville de France";
+
+        {
+            
+            value = Op.on(value).exec(FnString.unescapeHTML()).get();
+            
+            assertEquals(result, value);
+            
+        }
+
+        {
+            
+            value = FnString.unescapeHTML().execute(value);
+            
+            assertEquals(result, value);
+            
+        }
+        
+    }
+
+
+    
+    @Test
+    public void testOP4J_025() throws Exception {
+        // Building a map from a list by executing functions on its elements
+
+        List<Country> countries = new ArrayList<Country>();
+        Country country1 = new Country("Spain", Integer.valueOf(45989016));
+        countries.add(country1);
+        Country country2 = new Country("France", Integer.valueOf(65447374));
+        countries.add(country2);
+        Country country3 = new Country("Portugal", Integer.valueOf(10707924));
+        countries.add(country3);
+        Country country4 = new Country("United Kingdom", Integer.valueOf(62041708));
+        countries.add(country4);
+        Country country5 = new Country("Ireland", Integer.valueOf(4459300));
+        countries.add(country5);
+
+        
+        Map<String, Integer> result = new LinkedHashMap<String, Integer>();
+        result.put("Spain", Integer.valueOf(45989016));
+        result.put("France", Integer.valueOf(65447374));
+        result.put("Portugal", Integer.valueOf(10707924));
+        result.put("United Kingdom", Integer.valueOf(62041708));
+        result.put("Ireland", Integer.valueOf(4459300));
+        
+        {
+            
+            Map<String,Integer> populationByCountry =
+                Op.on(countries).
+                    toMap(Get.attrOfString("name"), Get.attrOfInteger("population")).get();
+            
+            assertEquals(result, populationByCountry);
+            
+        }
+        
+        {
+            
+            Map<String,Integer> populationByCountry = new LinkedHashMap<String, Integer>();
+            for (Country country : countries) {
+                populationByCountry.put(country.getName(), country.getPopulation());
+            }
+            
+            assertEquals(result, populationByCountry);
+            
+        }
+        
+        {
+            
+            
+            Map<String, Integer> sortedResult = new LinkedHashMap<String, Integer>();
+            sortedResult.put("France", Integer.valueOf(65447374));
+            sortedResult.put("United Kingdom", Integer.valueOf(62041708));
+            sortedResult.put("Spain", Integer.valueOf(45989016));
+            sortedResult.put("Portugal", Integer.valueOf(10707924));
+            sortedResult.put("Ireland", Integer.valueOf(4459300));
+            
+            
+            Map<String,Integer> populationByCountry =
+                Op.on(countries).
+                    sortBy(Get.attrOfInteger("population")).reverse().
+                    toMap(Get.attrOfString("name"), Get.attrOfInteger("population")).get();
+            
+            
+            
+            assertEquals(
+                    new ArrayList<Map.Entry<String,Integer>>(sortedResult.entrySet()), 
+                    new ArrayList<Map.Entry<String,Integer>>(populationByCountry.entrySet()));
+            
+        }
+        
+        
+        {
+            
+            
+            Map<String, Integer> sortedResult = new LinkedHashMap<String, Integer>();
+            sortedResult.put("France", Integer.valueOf(65447374));
+            sortedResult.put("United Kingdom", Integer.valueOf(62041708));
+            sortedResult.put("Spain", Integer.valueOf(45989016));
+            sortedResult.put("Portugal", Integer.valueOf(10707924));
+            sortedResult.put("Ireland", Integer.valueOf(4459300));
+            
+            
+            Map<String,Integer> populationByCountry =
+                Op.on(countries).
+                    toMap(Get.attrOfString("name"), Get.attrOfInteger("population")).
+                    sortBy(Get.attrOfInteger("value")).reverse().get();
+            
+            
+            
+            assertEquals(
+                    new ArrayList<Map.Entry<String,Integer>>(sortedResult.entrySet()), 
+                    new ArrayList<Map.Entry<String,Integer>>(populationByCountry.entrySet()));
+            
+        }
+        
+        
+        
+        
+    }
+    
+    
     
     @Test
     public void testOP4J_XXX() throws Exception {
@@ -1013,6 +1141,22 @@ public class RecipesTests extends TestCase {
     }
 
     
+    
+    public static class Country {
+        private final String name;
+        private final Integer population;
+        public Country(String name, Integer population) {
+            super();
+            this.name = name;
+            this.population = population;
+        }
+        public String getName() {
+            return this.name;
+        }
+        public Integer getPopulation() {
+            return this.population;
+        }
+    }
     
 }
 
