@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.op4j.functions.Call;
 import org.op4j.functions.DecimalPoint;
 import org.op4j.functions.Fn;
-import org.op4j.functions.FnArray;
 import org.op4j.functions.FnCalendar;
 import org.op4j.functions.FnFunc;
 import org.op4j.functions.FnList;
@@ -1048,6 +1047,84 @@ public class RecipesTests extends TestCase {
         
         
     }
+    
+
+    
+    @Test
+    public void testOP4J_026() throws Exception {
+        // Modifying some elements in an array (depending on a specific condition)
+
+        
+        List<String> herbs = Arrays.asList(new String[] {"*parsley*", "BASIL", "*Coriander*", "Spearmint" });
+        List<String> result = Arrays.asList(new String[] {"Parsley (sold out!)", "Basil", "Coriander (sold out!)", "Spearmint" });
+
+        {
+            herbs = 
+                Op.on(herbs).forEach().
+                    ifTrue(FnString.matches("\\*.*?\\*")).
+                        exec(FnString.matchAndExtract("\\*(.*?)\\*",1)).
+                        exec(FnOgnl.evalForString("#target + ' (sold out!)'")).
+                    endIf().exec(FnFunc.chain(FnString.toLowerCase(),FnString.capitalize())).get();
+            
+            assertEquals(result, herbs);
+            
+        }
+
+        herbs = Arrays.asList(new String[] {"*parsley*", "BASIL", "*Coriander*", "Spearmint" });
+        {
+            herbs = 
+                Op.on(herbs).forEach().
+                    execIfTrue(
+                        FnString.matches("\\*.*?\\*"),
+                        FnFunc.chain(
+                                FnString.matchAndExtract("\\*(.*?)\\*",1),
+                                FnOgnl.evalForString("#target + ' (sold out!)'"))).
+                    exec(FnFunc.chain(FnString.toLowerCase(),FnString.capitalize())).get();
+            
+            assertEquals(result, herbs);
+            
+        }
+
+        herbs = Arrays.asList(new String[] {"*parsley*", "BASIL", "*Coriander*", "Spearmint" });
+        result = Arrays.asList(new String[] {"Parsley (sold out!)", "Basil (on sale)", "Coriander (sold out!)", "Spearmint (on sale)" });
+        {
+            herbs = 
+                Op.on(herbs).forEach().
+                    execIfTrue(
+                        FnString.matches("\\*.*?\\*"),
+                        FnFunc.chain(
+                                FnString.matchAndExtract("\\*(.*?)\\*",1),
+                                FnOgnl.evalForString("#target + ' (sold out!)'")),
+                        FnOgnl.evalForString("#target + ' (on sale)'")).
+                    exec(FnFunc.chain(FnString.toLowerCase(),FnString.capitalize())).get();
+            
+            assertEquals(result, herbs);
+            
+        }
+
+        herbs = Arrays.asList(new String[] {"*parsley*", "BASIL", "*Coriander*", "Spearmint" });
+        result = Arrays.asList(new String[] {"Parsley (sold out!)", "Basil (on sale)", "Coriander (sold out!)", "Spearmint (on sale)" });
+        {
+            Function<List<String>,List<String>> processHerbNames = 
+                Fn.onListOf(Types.STRING).forEach().
+                    execIfTrue(
+                        FnString.matches("\\*.*?\\*"),
+                        FnFunc.chain(
+                                FnString.matchAndExtract("\\*(.*?)\\*",1),
+                                FnOgnl.evalForString("#target + ' (sold out!)'")),
+                        FnOgnl.evalForString("#target + ' (on sale)'")).
+                    exec(FnFunc.chain(FnString.toLowerCase(),FnString.capitalize())).get();
+            
+            herbs = processHerbNames.execute(herbs);
+            
+            assertEquals(result, herbs);
+            
+        }
+
+        
+    }
+
+    
     
     
     
