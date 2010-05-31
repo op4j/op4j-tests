@@ -1,6 +1,7 @@
 package org.op4j;
 
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -21,8 +22,10 @@ import org.junit.Test;
 import org.op4j.functions.Call;
 import org.op4j.functions.DecimalPoint;
 import org.op4j.functions.Fn;
+import org.op4j.functions.FnArray;
 import org.op4j.functions.FnCalendar;
 import org.op4j.functions.FnFunc;
+import org.op4j.functions.FnInteger;
 import org.op4j.functions.FnList;
 import org.op4j.functions.FnNumber;
 import org.op4j.functions.FnString;
@@ -1125,6 +1128,65 @@ public class RecipesTests extends TestCase {
     }
 
     
+    
+    
+    @Test
+    public void testOP4J_027() throws Exception {
+        // Checking if all the members of an array meet a specific condition
+        
+        Integer[] values = new Integer[] { 100, 23, 587 };
+
+        {
+            Boolean result = 
+                Op.on(values).all(FnInteger.lessThan(800)).get();
+            
+            assertEquals(Boolean.TRUE, result);
+            
+        }
+
+    }
+    
+    
+    
+    
+    @Test
+    public void testOP4J_028() throws Exception {
+        // Converting the keys in a map
+        
+        Map<String,String> map = new LinkedHashMap<String, String>();
+        map.put("1", "one");
+        map.put("2", "two");
+        map.put("3", "three");
+
+        
+        {
+            Map<Integer,String> result = new LinkedHashMap<Integer, String>();
+            result.put(Integer.valueOf(1), "one");
+            result.put(Integer.valueOf(2), "two");
+            result.put(Integer.valueOf(3), "three");
+            
+            Map<Integer,String> newMap = 
+                Op.on(map).forEachEntry().onKey().exec(FnString.toInteger()).get();
+            
+            assertEquals(result, newMap);
+            
+        }
+
+        {
+            Map<String,String> result = new LinkedHashMap<String, String>();
+            result.put("1", "ONE");
+            result.put("2", "TWO");
+            result.put("3", "THREE");
+            
+            Map<String,String> newMap = 
+                Op.on(map).forEachEntry().onValue().exec(FnString.toUpperCase()).get();
+        
+            assertEquals(result, newMap);
+        
+        }
+        
+    }
+
     
     
     
