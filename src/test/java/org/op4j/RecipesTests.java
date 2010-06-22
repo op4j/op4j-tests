@@ -1,7 +1,6 @@
 package org.op4j;
 
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -21,8 +20,8 @@ import org.javaruntype.type.Types;
 import org.junit.Test;
 import org.op4j.functions.Call;
 import org.op4j.functions.DecimalPoint;
+import org.op4j.functions.ExecCtx;
 import org.op4j.functions.Fn;
-import org.op4j.functions.FnArray;
 import org.op4j.functions.FnCalendar;
 import org.op4j.functions.FnFunc;
 import org.op4j.functions.FnInteger;
@@ -31,6 +30,7 @@ import org.op4j.functions.FnNumber;
 import org.op4j.functions.FnString;
 import org.op4j.functions.Function;
 import org.op4j.functions.Get;
+import org.op4j.functions.IFunction;
 import org.op4j.ognl.functions.FnOgnl;
 
 public class RecipesTests extends TestCase {
@@ -1170,21 +1170,7 @@ public class RecipesTests extends TestCase {
             
             assertEquals(result, newMap);
             
-        }
-
-        {
-            Map<String,String> result = new LinkedHashMap<String, String>();
-            result.put("1", "ONE");
-            result.put("2", "TWO");
-            result.put("3", "THREE");
-            
-            Map<String,String> newMap = 
-                Op.on(map).forEachEntry().onValue().exec(FnString.toUpperCase()).get();
-        
-            assertEquals(result, newMap);
-        
-        }
-        
+        }        
     }
 
     
@@ -1296,6 +1282,75 @@ public class RecipesTests extends TestCase {
             return this.population;
         }
     }
+    
+    //TODO Add to the recipes blog once op4j-1.1 is released
+    @Test
+    public void testOP4J_v11_1() throws Exception {
+        // Create a map with two keys: "VALID" with the strings valid as integer and "INVALID" with the not valid ones
+        // Convert the strings valid as integer to integer
+        
+        List<String> list = new ArrayList<String>();
+        list.add("5");
+        list.add("3.4");
+        list.add("89.7");
+        list.add("-13.999");
+        list.add("5f7");
+        list.add("537");
+        list.add("323a");
+        list.add("3,23");
+        
+        Map<String, List<String>> result = new LinkedHashMap<String, List<String>>();
+        result.put("VALID", Arrays.asList(new String[] {"5", "3.4", "89.7", "-13.999", "537", "3,23"}));
+        result.put("INVALID", Arrays.asList(new String[] {"5f7", "323a"}));
+        
+        {
+            Map<String, List<String>> validInvalidIntegers = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
+                    public String execute(String input, ExecCtx ctx) throws Exception {
+                        return Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_POINT)).get().booleanValue() 
+                            ? "VALID" : "INVALID";
+                    }
+                }).get();
+            
+            assertEquals(result, validInvalidIntegers);            
+        }       
+        
+        {
+            Map<String, List<String>> validInvalidIntegers = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
+                    public String execute(String input, ExecCtx ctx) throws Exception {
+                        return Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_COMMA)).get().booleanValue() 
+                            ? "VALID" : "INVALID";
+                    }
+                }).get();
+            
+            assertEquals(result, validInvalidIntegers);            
+        }
+        
+        {
+        
+            List<Integer> resultAsIntegerIfComma = Arrays.asList(new Integer[]{
+                    Integer.valueOf(5), Integer.valueOf(34), Integer.valueOf(897),
+                    Integer.valueOf(-13999), Integer.valueOf(537), Integer.valueOf(3)
+            });
+            
+            List<Integer> asIntegerIfComma = Op.on(result.get("VALID")).forEach()
+                .exec(FnString.toInteger(DecimalPoint.IS_COMMA)).get();
+            
+            assertEquals(resultAsIntegerIfComma, asIntegerIfComma);
+        
+        }
+        
+        {
+            List<Integer> resultAsIntegerIfPoint = Arrays.asList(new Integer[]{
+                    Integer.valueOf(5), Integer.valueOf(3), Integer.valueOf(89),
+                    Integer.valueOf(-13), Integer.valueOf(537), Integer.valueOf(323)
+            });
+        
+            List<Integer> asIntegerIfPoint = Op.on(result.get("VALID")).forEach()
+                .exec(FnString.toInteger(DecimalPoint.IS_POINT)).get();
+            assertEquals(resultAsIntegerIfPoint, asIntegerIfPoint);
+        }
+    }
+    
     
 }
 
