@@ -8,8 +8,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import junit.framework.TestCase;
 
@@ -17,6 +19,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.javaruntype.type.Type;
 import org.javaruntype.type.Types;
+import org.joda.time.DateTime;
 import org.junit.Test;
 import org.op4j.functions.Call;
 import org.op4j.functions.DecimalPoint;
@@ -27,6 +30,7 @@ import org.op4j.functions.FnFunc;
 import org.op4j.functions.FnInteger;
 import org.op4j.functions.FnList;
 import org.op4j.functions.FnNumber;
+import org.op4j.functions.FnObject;
 import org.op4j.functions.FnString;
 import org.op4j.functions.Function;
 import org.op4j.functions.Get;
@@ -1174,6 +1178,85 @@ public class RecipesTests extends TestCase {
     }
 
     
+    //TODO Add to the recipes blog
+    @Test
+    public void testOP4J_029() throws Exception {
+        // Convert a List<String> to List<Calendar>, keep only dates from 2010 and generate a list map with them using
+        //the month as key
+        
+        List<String> asString = new ArrayList<String>();
+        asString.add("20100505");
+        asString.add("20100614");
+        asString.add("19980407");
+        asString.add("20100209");
+        asString.add("20100215");
+        asString.add("20110101");
+        asString.add("20100620");
+        asString.add("20100301");        
+        
+        
+        List<Calendar> asCalendar;
+        {
+            // Convert List<String> into List<Calendar>            
+            asCalendar = Op.on(asString).forEach()
+                .exec(FnString.toCalendar("yyyyMMdd")).get();
+            
+            List<Calendar> result = Arrays.asList(
+                    new DateTime(2010, 5, 5, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 6, 14, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(1998, 4, 7, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 2, 9, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 2, 15, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2011, 1, 1, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 6, 20, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 3, 1, 0, 0, 0, 0).toCalendar(Locale.getDefault()));            
+            assertEquals(result, asCalendar);            
+        }       
+        
+        {
+            // Filter List<Calendar> by keeping only 2010 dates
+            asCalendar = Op.on(asCalendar)
+                .removeAllTrue(FnObject.lessThan(new DateTime(2010, 1, 1, 0, 0, 0, 0)
+                    .toCalendar(Locale.getDefault())))
+                .removeAllTrue(FnObject.greaterOrEqTo(new DateTime(2011, 1, 1, 0, 0, 0, 0)
+                    .toCalendar(Locale.getDefault()))).get();
+            
+            List<Calendar> result = Arrays.asList(
+                    new DateTime(2010, 5, 5, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 6, 14, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 2, 9, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 2, 15, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 6, 20, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 3, 1, 0, 0, 0, 0).toCalendar(Locale.getDefault()));            
+            assertEquals(result, asCalendar);            
+        }
+        
+        {
+            // Create a map of list with the month as its key
+            Map<Integer, List<Calendar>> output = Op.on(asCalendar)
+                .zipAndGroupKeysBy(Call.methodForInteger("get", Calendar.MONTH)).get();
+            
+            Map<Integer, List<Calendar>> result = new LinkedHashMap<Integer, List<Calendar>>();
+            result.put(Integer.valueOf(1), Arrays.asList(
+                    new DateTime(2010, 2, 9, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 2, 15, 0, 0, 0, 0).toCalendar(Locale.getDefault())));
+            result.put(Integer.valueOf(2), Arrays.asList(
+                    new DateTime(2010, 3, 1, 0, 0, 0, 0).toCalendar(Locale.getDefault())));
+            result.put(Integer.valueOf(4), Arrays.asList(
+                    new DateTime(2010, 5, 5, 0, 0, 0, 0).toCalendar(Locale.getDefault())));
+            result.put(Integer.valueOf(5), Arrays.asList(
+                    new DateTime(2010, 6, 14, 0, 0, 0, 0).toCalendar(Locale.getDefault()),
+                    new DateTime(2010, 6, 20, 0, 0, 0, 0).toCalendar(Locale.getDefault())));
+            assertEquals(result, output);
+        }
+        
+        Map<Integer, List<Calendar>> output = Op.on(asString).forEach()
+            .exec(FnString.toCalendar("yyyyMMdd")).endFor()
+            .removeAllTrue(FnObject.lessThan(new DateTime(2010, 1, 1, 0, 0, 0, 0).toCalendar(Locale.getDefault())))
+            .removeAllTrue(FnObject.greaterOrEqTo(new DateTime(2011, 1, 1, 0, 0, 0, 0).toCalendar(Locale.getDefault())))
+            .zipAndGroupKeysBy(Call.methodForInteger("get", Calendar.MONTH)).get();
+        
+    }
     
     
     @Test
@@ -1282,6 +1365,8 @@ public class RecipesTests extends TestCase {
             return this.population;
         }
     }
+    
+    
     
     //TODO Add to the recipes blog once op4j-1.1 is released
     @Test
