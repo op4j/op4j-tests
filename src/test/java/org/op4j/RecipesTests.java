@@ -36,6 +36,7 @@ import org.op4j.functions.Function;
 import org.op4j.functions.Get;
 import org.op4j.functions.IFunction;
 import org.op4j.ognl.functions.FnOgnl;
+import org.op4j.operators.impl.op.generic.Level0GenericUniqOperator;
 
 public class RecipesTests extends TestCase {
 
@@ -1437,5 +1438,42 @@ public class RecipesTests extends TestCase {
     }
     
     
+    //TODO Add to the recipes blog once op4j-1.1 is released
+    //FIXME Use between if it finally exists
+    @Test
+    public void testOP4J_v11_2() throws Exception {
+        // Given a List<String>, create a map with two keys: "VALID" with the strings valid as a percentage between 0 and 100
+        // (only non decimal values allowed) and "INVALID" with the not valid ones
+        
+        List<String> list = new ArrayList<String>();
+        list.add("5");
+        list.add("3.4");
+        list.add("-13");
+        list.add("0");
+        list.add("5k7");
+        list.add("ten");
+        list.add("32");
+        list.add("1,2");
+        
+        Map<String, List<String>> result = new LinkedHashMap<String, List<String>>();
+        result.put("VALID", Arrays.asList(new String[] {"5", "3.4", "0", "32", "1,2"}));
+        result.put("INVALID", Arrays.asList(new String[] {"-13", "5k7", "ten"}));
+        
+        {
+            Map<String, List<String>> validInvalidPercentages = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
+                    public String execute(String input, ExecCtx ctx) throws Exception {
+                        boolean result1 = Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_POINT)).get().booleanValue();
+                        Level0GenericUniqOperator<String, Integer> tmp = 
+                            Op.on(input).exec(FnString.toInteger(DecimalPoint.IS_POINT));
+                        result1 = result1 && tmp.exec(FnNumber.greaterOrEqTo(0)).get().booleanValue();
+                        result1 = result1 && tmp.exec(FnNumber.lessOrEqTo(100)).get().booleanValue();
+                        return result1 ? "VALID" : "INVALID";
+                    }
+                }).get();
+            
+            assertEquals(result, validInvalidPercentages);            
+        }      
+        
+    }
 }
 
