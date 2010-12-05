@@ -1179,7 +1179,6 @@ public class RecipesTests extends TestCase {
     }
 
     
-    //TODO Add to the recipes blog
     @Test
     public void testOP4J_029() throws Exception {
         // Convert a List<String> to List<Calendar>, keep only dates from 2010 and generate a list map with them using
@@ -1256,6 +1255,108 @@ public class RecipesTests extends TestCase {
             .removeAllTrue(FnObject.lessThan(new DateTime(2010, 1, 1, 0, 0, 0, 0).toCalendar(Locale.getDefault())))
             .removeAllTrue(FnObject.greaterOrEqTo(new DateTime(2011, 1, 1, 0, 0, 0, 0).toCalendar(Locale.getDefault())))
             .zipAndGroupKeysBy(Call.methodForInteger("get", Calendar.MONTH)).get();
+        
+    }
+    
+    
+    @Test
+    public void testOP4J_030() throws Exception {
+        // Create a map with two keys: "VALID" with the strings valid as integer and "INVALID" with the not valid ones
+        // Convert the strings valid as integer to integer
+        
+        List<String> list = new ArrayList<String>();
+        list.add("5");
+        list.add("3.4");
+        list.add("89.7");
+        list.add("-13.999");
+        list.add("5f7");
+        list.add("537");
+        list.add("323a");
+        list.add("3,23");
+        
+        Map<String, List<String>> result = new LinkedHashMap<String, List<String>>();
+        result.put("VALID", Arrays.asList(new String[] {"5", "3.4", "89.7", "-13.999", "537", "3,23"}));
+        result.put("INVALID", Arrays.asList(new String[] {"5f7", "323a"}));
+        
+        {
+            Map<String, List<String>> validInvalidIntegers = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
+                    public String execute(String input, ExecCtx ctx) throws Exception {
+                        return Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_POINT)).get().booleanValue() 
+                            ? "VALID" : "INVALID";
+                    }
+                }).get();
+            
+            assertEquals(result, validInvalidIntegers);            
+        }       
+        
+        {
+            Map<String, List<String>> validInvalidIntegers = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
+                    public String execute(String input, ExecCtx ctx) throws Exception {
+                        return Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_COMMA)).get().booleanValue() 
+                            ? "VALID" : "INVALID";
+                    }
+                }).get();
+            
+            assertEquals(result, validInvalidIntegers);            
+        }
+        
+        {
+        
+            List<Integer> resultAsIntegerIfComma = Arrays.asList(new Integer[]{
+                    Integer.valueOf(5), Integer.valueOf(34), Integer.valueOf(897),
+                    Integer.valueOf(-13999), Integer.valueOf(537), Integer.valueOf(3)
+            });
+            
+            List<Integer> asIntegerIfComma = Op.on(result.get("VALID")).forEach()
+                .exec(FnString.toInteger(DecimalPoint.IS_COMMA)).get();
+            
+            assertEquals(resultAsIntegerIfComma, asIntegerIfComma);
+        
+        }
+        
+        {
+            List<Integer> resultAsIntegerIfPoint = Arrays.asList(new Integer[]{
+                    Integer.valueOf(5), Integer.valueOf(3), Integer.valueOf(89),
+                    Integer.valueOf(-13), Integer.valueOf(537), Integer.valueOf(323)
+            });
+        
+            List<Integer> asIntegerIfPoint = Op.on(result.get("VALID")).forEach()
+                .exec(FnString.toInteger(DecimalPoint.IS_POINT)).get();
+            assertEquals(resultAsIntegerIfPoint, asIntegerIfPoint);
+        }
+    }
+    
+    
+    @Test
+    public void testOP4J_031() throws Exception {
+        // Given a List<String>, create a map with two keys: "VALID" with the strings valid as a percentage between 0 and 100
+        // and "INVALID" with the not valid ones
+        
+        List<String> list = new ArrayList<String>();
+        list.add("5");
+        list.add("3.4");
+        list.add("-13");
+        list.add("0");
+        list.add("5k7");
+        list.add("ten");
+        list.add("32");
+        list.add("1,2");
+        
+        Map<String, List<String>> result = new LinkedHashMap<String, List<String>>();
+        result.put("VALID", Arrays.asList(new String[] {"5", "3.4", "0", "32", "1,2"}));
+        result.put("INVALID", Arrays.asList(new String[] {"-13", "5k7", "ten"}));
+        
+        {
+            Map<String, List<String>> validInvalidPercentages = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
+                    public String execute(String input, ExecCtx ctx) throws Exception {
+                        return Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_POINT)).get().booleanValue()
+                            && Op.on(input).exec(FnString.toInteger(DecimalPoint.IS_POINT)).exec(FnNumber.between(0, 100)).get().booleanValue()
+                                ? "VALID" : "INVALID";
+                    }
+                }).get();
+            
+            assertEquals(result, validInvalidPercentages);            
+        }      
         
     }
     
@@ -1369,111 +1470,5 @@ public class RecipesTests extends TestCase {
     
     
     
-    //TODO Add to the recipes blog once op4j-1.1 is released
-    @Test
-    public void testOP4J_v11_1() throws Exception {
-        // Create a map with two keys: "VALID" with the strings valid as integer and "INVALID" with the not valid ones
-        // Convert the strings valid as integer to integer
-        
-        List<String> list = new ArrayList<String>();
-        list.add("5");
-        list.add("3.4");
-        list.add("89.7");
-        list.add("-13.999");
-        list.add("5f7");
-        list.add("537");
-        list.add("323a");
-        list.add("3,23");
-        
-        Map<String, List<String>> result = new LinkedHashMap<String, List<String>>();
-        result.put("VALID", Arrays.asList(new String[] {"5", "3.4", "89.7", "-13.999", "537", "3,23"}));
-        result.put("INVALID", Arrays.asList(new String[] {"5f7", "323a"}));
-        
-        {
-            Map<String, List<String>> validInvalidIntegers = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
-                    public String execute(String input, ExecCtx ctx) throws Exception {
-                        return Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_POINT)).get().booleanValue() 
-                            ? "VALID" : "INVALID";
-                    }
-                }).get();
-            
-            assertEquals(result, validInvalidIntegers);            
-        }       
-        
-        {
-            Map<String, List<String>> validInvalidIntegers = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
-                    public String execute(String input, ExecCtx ctx) throws Exception {
-                        return Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_COMMA)).get().booleanValue() 
-                            ? "VALID" : "INVALID";
-                    }
-                }).get();
-            
-            assertEquals(result, validInvalidIntegers);            
-        }
-        
-        {
-        
-            List<Integer> resultAsIntegerIfComma = Arrays.asList(new Integer[]{
-                    Integer.valueOf(5), Integer.valueOf(34), Integer.valueOf(897),
-                    Integer.valueOf(-13999), Integer.valueOf(537), Integer.valueOf(3)
-            });
-            
-            List<Integer> asIntegerIfComma = Op.on(result.get("VALID")).forEach()
-                .exec(FnString.toInteger(DecimalPoint.IS_COMMA)).get();
-            
-            assertEquals(resultAsIntegerIfComma, asIntegerIfComma);
-        
-        }
-        
-        {
-            List<Integer> resultAsIntegerIfPoint = Arrays.asList(new Integer[]{
-                    Integer.valueOf(5), Integer.valueOf(3), Integer.valueOf(89),
-                    Integer.valueOf(-13), Integer.valueOf(537), Integer.valueOf(323)
-            });
-        
-            List<Integer> asIntegerIfPoint = Op.on(result.get("VALID")).forEach()
-                .exec(FnString.toInteger(DecimalPoint.IS_POINT)).get();
-            assertEquals(resultAsIntegerIfPoint, asIntegerIfPoint);
-        }
-    }
-    
-    
-    //TODO Add to the recipes blog once op4j-1.1 is released
-    //FIXME Use between if it finally exists
-    @Test
-    public void testOP4J_v11_2() throws Exception {
-        // Given a List<String>, create a map with two keys: "VALID" with the strings valid as a percentage between 0 and 100
-        // (only non decimal values allowed) and "INVALID" with the not valid ones
-        
-        List<String> list = new ArrayList<String>();
-        list.add("5");
-        list.add("3.4");
-        list.add("-13");
-        list.add("0");
-        list.add("5k7");
-        list.add("ten");
-        list.add("32");
-        list.add("1,2");
-        
-        Map<String, List<String>> result = new LinkedHashMap<String, List<String>>();
-        result.put("VALID", Arrays.asList(new String[] {"5", "3.4", "0", "32", "1,2"}));
-        result.put("INVALID", Arrays.asList(new String[] {"-13", "5k7", "ten"}));
-        
-        {
-            Map<String, List<String>> validInvalidPercentages = Op.on(list).zipAndGroupKeysBy(new IFunction<String, String>() {
-                    public String execute(String input, ExecCtx ctx) throws Exception {
-                        boolean result1 = Op.on(input).exec(FnString.isInteger(DecimalPoint.IS_POINT)).get().booleanValue();
-                        Level0GenericUniqOperator<String, Integer> tmp = 
-                            Op.on(input).exec(FnString.toInteger(DecimalPoint.IS_POINT));
-                        result1 = result1 && tmp.exec(FnNumber.greaterOrEqTo(0)).get().booleanValue();
-                        result1 = result1 && tmp.exec(FnNumber.lessOrEqTo(100)).get().booleanValue();
-                        return result1 ? "VALID" : "INVALID";
-                    }
-                }).get();
-            
-            assertEquals(result, validInvalidPercentages);            
-        }      
-        
-    }
 }
 
