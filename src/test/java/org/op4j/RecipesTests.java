@@ -854,9 +854,8 @@ public class RecipesTests extends TestCase {
         }
         
         {
-            
             Function<String[],String[]> riverize = 
-                Fn.on(Types.ARRAY_OF_STRING).map(FnOgnl.evalForString("'River ' + #target")).get();
+                Fn.onArrayOf(Types.STRING).map(FnOgnl.evalForString("'River ' + #target")).get();
             
             String[] rivers = riverize.execute(riverNames);
             
