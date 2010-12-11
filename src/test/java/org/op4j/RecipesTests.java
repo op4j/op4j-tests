@@ -19,7 +19,9 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.javaruntype.type.Type;
 import org.javaruntype.type.Types;
+import org.joda.time.DateMidnight;
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.junit.Test;
 import org.op4j.functions.Call;
 import org.op4j.functions.DecimalPoint;
@@ -35,6 +37,7 @@ import org.op4j.functions.FnString;
 import org.op4j.functions.Function;
 import org.op4j.functions.Get;
 import org.op4j.functions.IFunction;
+import org.op4j.jodatime.functions.FnDateMidnight;
 import org.op4j.ognl.functions.FnOgnl;
 import org.op4j.operators.impl.op.generic.Level0GenericUniqOperator;
 
@@ -1358,6 +1361,51 @@ public class RecipesTests extends TestCase {
         }      
         
     }
+    
+    
+    
+    @Test
+    public void testOP4J_032() throws Exception {
+        // Given a List<String> where each string represents a date in the 
+        //format mm/dd/yyyy, convert it to a List<DateMidnight>
+       
+        
+        List<String> list = new ArrayList<String>();
+        list.add("12/24/2000");
+        list.add("02/02/2010");
+        list.add("04/04/2002");
+        list.add("11/22/2005");
+        list.add("02/07/2005");
+        list.add("03/05/2005");
+        list.add("09/13/2006");
+        list.add("12/29/2007");
+            
+        
+        List<DateMidnight> result = new ArrayList<DateMidnight>();
+        result.add(new DateMidnight(2000, 12, 24));
+        result.add(new DateMidnight(2010, 2, 2));
+        result.add(new DateMidnight(2002, 4, 4));
+        result.add(new DateMidnight(2005, 11, 22));
+        result.add(new DateMidnight(2005, 2, 7));
+        result.add(new DateMidnight(2005, 3, 5));
+        result.add(new DateMidnight(2006, 9, 13));
+        result.add(new DateMidnight(2007, 12, 29));
+        
+        {
+            String pattern = "MM/dd/yyyy";
+            
+            List<DateMidnight> datemidnights = Op.on(list).forEach()
+                .exec(FnDateMidnight.strToDateMidnight(pattern)).get();
+        
+            assertEquals(result, datemidnights);            
+        }      
+        
+    }
+    
+    
+    
+    
+    
     
     
     @Test
