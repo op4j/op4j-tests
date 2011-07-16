@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import junit.framework.TestCase;
 
@@ -21,7 +20,6 @@ import org.javaruntype.type.Type;
 import org.javaruntype.type.Types;
 import org.joda.time.DateMidnight;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 import org.junit.Test;
 import org.op4j.functions.Call;
 import org.op4j.functions.DecimalPoint;
@@ -39,7 +37,6 @@ import org.op4j.functions.Get;
 import org.op4j.functions.IFunction;
 import org.op4j.jodatime.functions.FnDateMidnight;
 import org.op4j.ognl.functions.FnOgnl;
-import org.op4j.operators.impl.op.generic.Level0GenericUniqOperator;
 
 public class RecipesTests extends TestCase {
 
@@ -1403,7 +1400,49 @@ public class RecipesTests extends TestCase {
     }
     
     
+    @Test
+    public void testOP4J_033() throws Exception {
+        // Given two List<Integer> A and B, subtract B from A 
+    	//and sum the result
+       
+        
+        List<Integer> sentBooks = new ArrayList<Integer>();
+        sentBooks.add(Integer.valueOf(5));
+        sentBooks.add(Integer.valueOf(56));
+        sentBooks.add(Integer.valueOf(23));
+        sentBooks.add(Integer.valueOf(134));
+        sentBooks.add(Integer.valueOf(13));
+        sentBooks.add(Integer.valueOf(98));
+        sentBooks.add(Integer.valueOf(345));
+        sentBooks.add(Integer.valueOf(87));
+            
+        List<Integer> orderedBooks = new ArrayList<Integer>();
+        orderedBooks.add(Integer.valueOf(15));
+        orderedBooks.add(Integer.valueOf(50));
+        orderedBooks.add(Integer.valueOf(23));
+        orderedBooks.add(Integer.valueOf(150));
+        orderedBooks.add(Integer.valueOf(3));
+        orderedBooks.add(Integer.valueOf(98));
+        orderedBooks.add(Integer.valueOf(300));
+        orderedBooks.add(Integer.valueOf(7));
+        
+        Integer result = 10 + 0 + 0 + 16 + 0 + 0 + 0 + 0;
+        
+        {
+        	
+        	// 1 - We subtract sentList from orderedList 
+        	// 2 - For the previous list, whenever the result is negative, we set it to 0
+            // 3 - We sum the previous list to know how many units we still have to receive
+            Integer pendingBooks = Op.on(orderedBooks).forEach().exec(FnOgnl.i("#target - #param[0].get(#index)", sentBooks))
+            	.execIfTrue(FnOgnl.bool("#target < 0"), FnOgnl.i("#param[0]", Integer.valueOf(0))).endFor()
+            	.exec(FnInteger.sum()).get();
+            
+            assertEquals(result, pendingBooks);            
+        }      
+        
+    }
     
+
     
     
     
